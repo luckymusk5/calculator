@@ -1,0 +1,23 @@
+name: flutter_application_3
+
+description: Calculateur de notes étudiant
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.1.0
+  fl_chart: ^1.1.1
+  animations: ^2.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
