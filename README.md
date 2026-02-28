@@ -1,16 +1,67 @@
-# flutter_application_3
+# 🎓 Student Grade Calculator – Dart & Kotlin
 
-A new Flutter project.
+Ce projet a été réalisé dans le cadre d’un questionnaire demandant l’implémentation d’un **Student Grade Calculator** avec gestion des valeurs nullables, calcul de statistiques et attribution d’un grade.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🎯 Objectif du projet
 
-A few resources to get you started if this is your first Flutter project:
+L’objectif était de :
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Implémenter le calculateur en **Dart (Flutter)**
+- et en **Kotlin**
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🛠️ Exigences du questionnaire
+
+Ce projet respecte les points demandés :
+
+- Utilisation de variables **nullables**
+- Gestion des entrées invalides
+- Calcul de :
+  - Moyenne
+  - Minimum
+  - Maximum
+  - Médiane
+- Attribution du grade (A → F)
+- Gestion des cas limites
+- Utilisation de structures conditionnelles adaptées  
+  - `if/else` en Dart  
+  - `when` en Kotlin  
+- Utilisation d’une `data class` en Kotlin
+
+---
+
+## 💻 Partie 1 – Implémentation en Dart (Flutter)
+
+- Interface graphique moderne
+- Calcul dynamique des statistiques
+- Animation lors de l’affichage des résultats
+- Visualisation des notes avec un graphique en barres
+
+---
+
+## 📱 Partie 2 – Implémentation en Kotlin
+
+- Reproduction de la même logique métier
+- Utilisation de :
+  - `data class`
+  - `Double?`
+  - `toDoubleOrNull()`
+  - `when`
+  - Elvis operator `?:`
+  - Safe call `?.`
+
+---
+
+## 🧠 Conclusion
+
+Ce projet permet de comparer concrètement :
+
+- La gestion des nullables en Dart vs Kotlin
+- Les structures conditionnelles
+- La syntaxe des deux langages
+- L’architecture UI (Flutter vs Android)
+
+Il met en évidence les similitudes et différences entre les deux langages à travers un même cas pratique.
