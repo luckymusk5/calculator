@@ -1,0 +1,31 @@
+# Fichiers JAR
+*.jar
+
+# Fichiers de build
+build/
+dist/
+*.o
+*.a
+*.so
+
+# Fichiers IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Fichiers système
+Thumbs.db
+.env
+
+# Dépendances
+node_modules/
+.gradle/
+.m2/
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*.log
