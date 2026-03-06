@@ -1,234 +1,153 @@
-package com.example.flutter_application_3
+package com.example.calculator
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.scaleIn
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import java.util.*
+import java.io.File
 
-// --- ACTIVITÉ PRINCIPALE ---
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MaterialTheme {
-                CalculatorApp()
-            }
-        }
+// --- MODÈLES DE DONNÉES ---
+data class Etudiant(
+    val nom: String,
+    val note: Double,
+    val grade: String
+) {
+    // Fonction de formatage
+    fun formatAffichage(): String =
+        "%-35s | %6.2f | %-2s".format(nom, note, grade)
+}
+
+// --- FONCTIONS UTILITAIRES ---
+fun obtenirGrade(note: Double): String {
+    return when {
+        note >= 16 -> "A"
+        note >= 14 -> "B"
+        note >= 12 -> "C"
+        note >= 10 -> "D"
+        else -> "F"
     }
 }
 
-// --- LOGIQUE DE CALCUL ---
-data class Stats(
-    val moyenne: Double,
-    val min: Double,
-    val max: Double,
-    val mediane: Double,
-    val grade: String,
-    val color: Color
-)
+// --- CHARGEMENT CSV ---
+fun chargerDonneesCSV(cheminFichier: String): List<Etudiant> {
+    return try {
+        val file = File(cheminFichier)
+        if (!file.exists()) {
+            println("❌ Erreur : Le fichier '$cheminFichier' n'existe pas")
+            emptyList()
+        } else {
+            file.readLines()
+                .drop(1) // on ignore l’en-tête
+                .mapNotNull { ligne ->
+                    val parts = ligne.split(",")
+                    if (parts.size >= 2) {
+                        val nom = parts[0].trim()
+                        val note = parts[1].trim().toDoubleOrNull()
+                        if (note != null && note in 0.0..20.0) {
+                            Etudiant(nom, note, obtenirGrade(note))
+                        } else null
+                    } else null
+                }
+        }
+    } catch (e: Exception) {
+        println("❌ Erreur lors de la lecture du fichier : ${e.message}")
+        emptyList()
+    }
+}
 
-fun calculerStats(notes: List<Double>): Stats {
-    val moyenne = notes.average()
-    val min = notes.minOrNull() ?: 0.0
-    val max = notes.maxOrNull() ?: 0.0
-    val sorted = notes.sorted()
-    val mediane = if (sorted.size % 2 == 0) {
-        (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
+// --- ÉCRITURE CSV AVEC STATISTIQUES ---
+fun ecrireCSV(etudiants: List<Etudiant>, cheminFichier: String) {
+    try {
+        val file = File(cheminFichier)
+        file.printWriter().use { out ->
+            // En-tête
+            out.println("Nom,Note,Grade")
+            // Données
+            etudiants.forEach { out.println("${it.nom},${it.note},${it.grade}") }
+
+            // Statistiques globales
+            val notes = etudiants.map { it.note }
+            val moyenne = notes.average()
+            val min = notes.minOrNull() ?: 0.0
+            val max = notes.maxOrNull() ?: 0.0
+            val sorted = notes.sorted()
+            val mediane = if (sorted.size % 2 == 0) {
+                (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
+            } else {
+                sorted[sorted.size / 2]
+            }
+            val gradeGlobal = obtenirGrade(moyenne)
+
+            out.println()
+            out.println("STATISTIQUES GLOBALES")
+            out.println("Nombre d'étudiants,${etudiants.size}")
+            out.println("Moyenne,${"%.2f".format(moyenne)}")
+            out.println("Note minimale,${"%.2f".format(min)}")
+            out.println("Note maximale,${"%.2f".format(max)}")
+            out.println("Médiane,${"%.2f".format(mediane)}")
+            out.println("Grade global,$gradeGlobal")
+        }
+        println("✅ Fichier CSV créé : $cheminFichier")
+    } catch (e: Exception) {
+        println("❌ Erreur lors de l’écriture du fichier : ${e.message}")
+    }
+}
+
+// --- AFFICHAGE TABLEAU ---
+fun afficherTableauEtudiants(etudiants: List<Etudiant>) {
+    if (etudiants.isEmpty()) {
+        println("❌ Aucun étudiant à afficher")
+        return
+    }
+
+    println("\n" + "═".repeat(70))
+    println("📊 TABLEAU DES ÉTUDIANTS ET LEURS GRADES")
+    println("═".repeat(70))
+    println("%-35s | %-10s | %-10s".format("Nom", "Note", "Grade"))
+    println("-".repeat(70))
+
+    etudiants.forEach { println(it.formatAffichage()) }
+
+    println("═".repeat(70))
+}
+
+// --- MAIN ---
+fun main(args: Array<String>) {
+    println("\n🎓 === CALCULATEUR DE NOTES AVEC GRADES ===\n")
+
+    val cheminFichier = if (args.isNotEmpty()) {
+        args[0]
     } else {
-        sorted[sorted.size / 2]
+        print("📁 Entrez le chemin du fichier CSV : ")
+        readLine() ?: ""
     }
 
-    val (grade, color) = when {
-        moyenne >= 16 -> "A" to Color.Green
-        moyenne >= 14 -> "B" to Color.Blue
-        moyenne >= 12 -> "C" to Color(0xFFFFA500)
-        moyenne >= 10 -> "D" to Color(0xFFFF8C00)
-        else -> "F" to Color.Red
+    if (cheminFichier.isBlank()) {
+        println("❌ Aucun chemin fourni")
+        return
     }
 
-    return Stats(moyenne, min, max, mediane, grade, color)
-}
+    println("⏳ Chargement des données...")
+    val etudiants = chargerDonneesCSV(cheminFichier)
 
-// --- INTERFACE UI ---
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-fun CalculatorApp() {
-    var nom by remember { mutableStateOf("") }
-    var noteInput by remember { mutableStateOf("") }
-    val notes = remember { mutableStateListOf<Double>() }
-    var stats by remember { mutableStateOf<Stats?>(null) }
+    if (etudiants.isNotEmpty()) {
+        println("✅ ${etudiants.size} étudiant(s) chargé(s)\n")
+        afficherTableauEtudiants(etudiants)
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF4F6FB))) {
-        // HEADER
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.linearGradient(listOf(Color(0xFF530153), Color(0xFF8415A0))),
-                    shape = RoundedCornerShape(bottomStart = 30.dp, bottomEnd = 30.dp)
-                )
-                .padding(top = 50.dp, bottom = 25.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Calculateur de note", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        // Exemple d’utilisation d’un higher-order function (filter)
+        val reussites = etudiants.filter { it.note >= 10 }
+        println("\n✅ Étudiants ayant réussi :")
+        reussites.forEach { println(it.nom) }
+
+        // Exemple d’un lambda passé à une fonction personnalisée
+        fun appliquerSurEtudiants(liste: List<Etudiant>, action: (Etudiant) -> Unit) {
+            liste.forEach(action)
+        }
+        println("\n🔎 Application d’un lambda personnalisé :")
+        appliquerSurEtudiants(etudiants) { e ->
+            println("Étudiant ${e.nom} → Grade ${e.grade}")
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            OutlinedTextField(
-                value = nom,
-                onValueChange = { nom = it },
-                label = { Text("Nom de l'étudiant") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                leadingIcon = { Icon(Icons.Default.Person, null) }
-            )
-
-            Spacer(Modifier.height(15.dp))
-
-            Row {
-                OutlinedTextField(
-                    value = noteInput,
-                    onValueChange = { noteInput = it },
-                    label = { Text("Ajouter une note") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
-                    leadingIcon = { Icon(Icons.Default.Grade, null) }
-                )
-                Spacer(Modifier.width(10.dp))
-                Button(
-                    onClick = {
-                        noteInput.toDoubleOrNull()?.let { if (it in 0.0..20.0) { notes.add(it); noteInput = "" } }
-                    },
-                    modifier = Modifier.height(56.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) { Text("Ajouter") }
-            }
-
-            Spacer(Modifier.height(15.dp))
-
-            // LISTE DES NOTES
-            androidx.compose.layout.FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                notes.forEach { note ->
-                    InputChip(
-                        selected = false,
-                        onClick = {},
-                        label = { Text(note.toString()) },
-                        trailingIcon = {
-                            IconButton(onClick = { notes.remove(note) }) {
-                                Icon(Icons.Default.Close, null, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            Row(Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = { if (nom.isNotBlank() && notes.isNotEmpty()) stats = calculerStats(notes) },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Default.Calculate, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Calculer")
-                }
-                Spacer(Modifier.width(10.dp))
-                OutlinedButton(
-                    onClick = {
-                        nom = "Alice (Démo)"
-                        notes.clear()
-                        notes.addAll(listOf(18.5, 16.0, 19.0))
-                        stats = calculerStats(notes)
-                    },
-                    modifier = Modifier.height(50.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) { Text("Démo") }
-            }
-
-            Spacer(Modifier.height(30.dp))
-
-            AnimatedVisibility(visible = stats != null, enter = scaleIn()) {
-                stats?.let { s ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Moyenne : ${String.format(Locale.US, "%.2f", s.moyenne)} / 20", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(10.dp))
-                        Surface(color = s.color, shape = RoundedCornerShape(30.dp)) {
-                            Text(s.grade, modifier = Modifier.padding(horizontal = 40.dp, vertical = 8.dp), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(Modifier.height(25.dp))
-                        Row {
-                            StatCard("Min", s.min.toString(), Modifier.weight(1f))
-                            StatCard("Max", s.max.toString(), Modifier.weight(1f))
-                        }
-                        Row {
-                            StatCard("Médiane", String.format(Locale.US, "%.2f", s.mediane), Modifier.weight(1f))
-                            StatCard("Notes", notes.size.toString(), Modifier.weight(1f))
-                        }
-                        Spacer(Modifier.height(25.dp))
-                        BarChartCustom(notes)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun StatCard(title: String, value: String, modifier: Modifier) {
-    Card(modifier = modifier.padding(6.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-        Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(title, fontSize = 12.sp, color = Color.Gray)
-            Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-fun BarChartCustom(notes: List<Double>) {
-    Canvas(modifier = Modifier.fillMaxWidth().height(150.dp).padding(10.dp)) {
-        val width = size.width
-        val height = size.height
-        val barWidth = if (notes.isNotEmpty()) (width / notes.size) * 0.7f else 0f
-        val spacing = if (notes.isNotEmpty()) (width / notes.size) * 0.3f else 0f
-
-        notes.forEachIndexed { index, note ->
-            val barHeight = (note.toFloat() / 20f) * height
-            drawRoundRect(
-                color = Color(0xFF8415A0),
-                topLeft = Offset(x = index * (barWidth + spacing), y = height - barHeight),
-                size = Size(barWidth, barHeight),
-                cornerRadius = CornerRadius(4.dp.toPx())
-            )
-        }
+        // Création du fichier de sortie avec grades + stats
+        val fichierSortie = "notes_avec_grades.csv"
+        ecrireCSV(etudiants, fichierSortie)
+    } else {
+        println("❌ Aucun étudiant n'a pu être chargé")
     }
 }
